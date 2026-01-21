@@ -87,25 +87,10 @@ export default function Home() {
   };
 
   return (
-    <div ref={containerRef} className="container">
-      {/* Video Section */}
-      <div className="video-container">
-        <video
-          className="video"
-          autoPlay
-          loop
-          muted
-          playsInline
-        >
-          <source src="/love-video.mp4" type="video/mp4" />
-          {/* Fallback for browsers that don't support video */}
-        </video>
-        {/* Fallback gradient if no video */}
-        <div className="video-fallback"></div>
-      </div>
+    <div ref={containerRef} className="container ">
 
       {/* Question and Buttons */}
-      <div className="content">
+      <div className="content ">
         <h1 className="question">Did you love me?</h1>
 
         <div className="buttons-container ">
