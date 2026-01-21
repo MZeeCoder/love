@@ -1,65 +1,199 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import './styles.css';
 
 export default function Home() {
+  const router = useRouter();
+  const [noButtonPosition, setNoButtonPosition] = useState({ x: 0, y: 0 });
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [hearts, setHearts] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const noButtonRef = useRef<HTMLButtonElement>(null);
+  const yesButtonRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Disable scrolling
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  const moveNoButton = () => {
+    if (!containerRef.current || !noButtonRef.current || !yesButtonRef.current) return;
+
+    const container = containerRef.current.getBoundingClientRect();
+    const noButton = noButtonRef.current.getBoundingClientRect();
+    const yesButton = yesButtonRef.current.getBoundingClientRect();
+
+    const buttonWidth = 120;
+    const buttonHeight = 50;
+    const margin = 100; // Minimum distance from Yes button and edges
+
+    let newX, newY;
+    let attempts = 0;
+    const maxAttempts = 50;
+
+    do {
+      // Generate random position across the entire viewport
+      newX = Math.random() * (container.width - buttonWidth - 40) + 20;
+      newY = Math.random() * (container.height - buttonHeight - 40) + 20;
+
+      // Calculate distance from Yes button
+      const yesCenterX = yesButton.left - container.left + yesButton.width / 2;
+      const yesCenterY = yesButton.top - container.top + yesButton.height / 2;
+      const newCenterX = newX + buttonWidth / 2;
+      const newCenterY = newY + buttonHeight / 2;
+      const distance = Math.sqrt(
+        Math.pow(newCenterX - yesCenterX, 2) + Math.pow(newCenterY - yesCenterY, 2)
+      );
+
+      // Check if position is far enough from Yes button
+      if (distance > margin && attempts < maxAttempts) {
+        break;
+      }
+
+      attempts++;
+    } while (attempts < maxAttempts);
+
+    setNoButtonPosition({ x: newX, y: newY });
+  };
+
+  const handleNoMouseEnter = () => {
+    moveNoButton();
+  };
+
+  const handleNoClick = () => {
+    moveNoButton();
+  };
+
+  const handleYesClick = () => {
+    setShowCelebration(true);
+
+    // Create multiple hearts
+    const newHearts = Array.from({ length: 20 }, (_, i) => ({
+      id: Date.now() + i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+    }));
+    setHearts(newHearts);
+
+    // Redirect after celebration
+    setTimeout(() => {
+      router.push('/celebration');
+    }, 2000);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div ref={containerRef} className="container">
+      {/* Video Section */}
+      <div className="video-container">
+        <video
+          className="video"
+          autoPlay
+          loop
+          muted
+          playsInline
+        >
+          <source src="/love-video.mp4" type="video/mp4" />
+          {/* Fallback for browsers that don't support video */}
+        </video>
+        {/* Fallback gradient if no video */}
+        <div className="video-fallback"></div>
+      </div>
+
+      {/* Question and Buttons */}
+      <div className="content">
+        <h1 className="question">Did you love me?</h1>
+
+        <div className="buttons-container ">
+          <button
+            ref={yesButtonRef}
+            onClick={handleYesClick}
+            className="button yes-button"
+            disabled={showCelebration}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Yes ❤️
+          </button>
+
+          <button
+            ref={noButtonRef}
+            onClick={handleNoClick}
+            onMouseEnter={handleNoMouseEnter}
+            className="button no-button"
+            style={{
+              position: noButtonPosition.x || noButtonPosition.y ? 'fixed' : 'relative',
+              left: noButtonPosition.x ? `${noButtonPosition.x}px` : 'auto',
+              top: noButtonPosition.y ? `${noButtonPosition.y}px` : 'auto',
+              transition: 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+            }}
           >
-            Documentation
-          </a>
+            No 💔
+          </button>
         </div>
-      </main>
+      </div>
+
+      {/* Celebration Animation */}
+      {showCelebration && (
+        <>
+          <div className="celebration-overlay">
+            <div className="celebration-message">
+              <h2 className="celebration-text">Yay! I knew it ❤️</h2>
+            </div>
+          </div>
+
+          {/* Floating Hearts */}
+          {hearts.map((heart) => (
+            <div
+              key={heart.id}
+              className="heart"
+              style={{
+                left: `${heart.x}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+              }}
+            >
+              💕
+            </div>
+          ))}
+
+          {/* Confetti */}
+          <div className="confetti-container">
+            {Array.from({ length: 50 }).map((_, i) => (
+              <div
+                key={i}
+                className="confetti"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  backgroundColor: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'][
+                    Math.floor(Math.random() * 5)
+                  ],
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Sparkles */}
+          <div className="sparkles-container">
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div
+                key={i}
+                className="sparkle"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 1.5}s`,
+                }}
+              >
+                ✨
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
+
 }
